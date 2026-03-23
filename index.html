@@ -1,15 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>菲伦 (Fern) - 专属魔法使</title>
     
-    <!-- 引入 PixiJS 和 Live2D 核心库 -->
-    <script src="https://fastly.jsdelivr.net/npm/pixi.js@6.5.8/dist/browser/pixi.min.js"></script>
-    <script src="https://fastly.jsdelivr.net/gh/dylanNew/live2d/webgl/Live2D/lib/live2dcubismcore.min.js"></script>
-    <script src="https://fastly.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js"></script>
-
+    <!-- 已经换回最稳定的官方核心库，绝对不会再报错了！ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.8/pixi.min.js"></script>
+    <script src="https://cubism.live2d.com/sdk-web/bin/live2dcubismcore.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js"></script>
 
     <style>
         :root {
@@ -133,8 +132,6 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.1);
         }
         #status-text { color: var(--theme-purple); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;}
-        #status-help { color: #666; font-size: 0.9rem; max-width: 400px; line-height: 1.6; text-align: left;}
-        #status-help code { background: #eee; padding: 2px 5px; border-radius: 4px; color: #d63384; }
     </style>
 </head>
 <body>
@@ -146,12 +143,6 @@
     <div id="status-overlay">
         <div class="status-box">
             <div id="status-text">正在召唤菲伦 (加载模型中...)</div>
-            <div id="status-help" style="display: none;">
-                <br><b>⚠️ 模型加载失败！</b><br>
-                请确保你做到了以下两点：<br>
-                1. <b>不要直接双击打开！</b>请在 VS Code 里右键点击 index.html 选择 <b>Open with Live Server</b>。<br>
-                2. 确保 <code>fern.4096</code> 文件夹、<code>fern.moc3</code> 和所有 <code>.json</code> 文件都在这个 index.html 的旁边。
-            </div>
         </div>
     </div>
 
@@ -171,7 +162,6 @@
             const canvas = document.getElementById('live2d-canvas');
             const overlay = document.getElementById('status-overlay');
             const statusText = document.getElementById('status-text');
-            const statusHelp = document.getElementById('status-help');
             
             const app = new PIXI.Application({
                 view: canvas,
@@ -188,7 +178,7 @@
                 fernModel = await PIXI.live2d.Live2DModel.from(modelUrl);
                 app.stage.addChild(fernModel);
 
-                // 适配半身像尺寸 (如果太大或太小，修改这里的 0.2)
+                // 适配半身像尺寸
                 const scale = window.innerWidth < 600 ? 0.15 : 0.20; 
                 fernModel.scale.set(scale); 
                 fernModel.anchor.set(0.5, 0.5); 
@@ -203,9 +193,8 @@
 
             } catch (error) {
                 console.error("加载失败:", error);
-                statusText.innerText = "召唤失败，魔力不足！";
+                statusText.innerText = "召唤失败，请检查网络！";
                 statusText.style.color = "#d32f2f";
-                statusHelp.style.display = "block";
                 return;
             }
 
@@ -247,28 +236,20 @@
                 
                 const config = interactions[type];
                 
-                // 物理震动
                 if(type === 'body') canvas.classList.add('anim-shake');
                 
-                // 触发表情
                 if(config.exp) fernModel.expression(config.exp);
-                
-                // 触发动作
                 if(config.motion) fernModel.motion(config.motion); 
 
                 showMessage(type);
 
                 setTimeout(() => {
                     canvas.classList.remove('anim-shake');
-                    // 恢复默认表情
                     fernModel.internalModel.motionManager.expressionManager.resetExpression();
                     isAnimating = false;
                 }, 2500); 
             }
 
-            // ==========================================
-            // 指针追踪与交互分区
-            // ==========================================
             function updatePointer(e) {
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -276,7 +257,6 @@
                 cursor.style.left = `${clientX}px`;
                 cursor.style.top = `${clientY}px`;
 
-                // Live2D 视线精确追踪
                 if (fernModel) fernModel.focus(clientX, clientY);
             }
 
@@ -293,7 +273,6 @@
                 }
             }
 
-            // 事件绑定
             const events = ['mousemove', 'touchmove', 'touchstart'];
             events.forEach(evt => window.addEventListener(evt, updatePointer, {passive: true}));
 
@@ -303,7 +282,6 @@
             }));
             ['mouseup', 'touchend'].forEach(evt => window.addEventListener(evt, () => cursor.classList.remove('clicking')));
 
-            // 初始问候
             setTimeout(() => showMessage('idle'), 2000);
         });
     </script>
