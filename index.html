@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>极简测试版 - 菲伦</title>
     
-    <!-- 1. PixiJS 渲染引擎 -->
+    <!-- 1. PixiJS 渲染引擎 (保持你的原版，绝不更改) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.8/pixi.min.js"></script>
     
-    <!-- 2. Live2D 核心库 (采用全球最稳定的开源社区镜像，国内不卡，绝对真包) -->
+    <!-- 2. Live2D 核心库 (保持你的原版，绝不更改) -->
     <script src="https://fastly.jsdelivr.net/gh/dylanNew/live2d/webgl/Live2D/lib/live2dcubismcore.min.js"></script>
     
-    <!-- 3. Live2D 桥接显示插件 -->
+    <!-- 3. Live2D 桥接显示插件 (保持你的原版，绝不更改) -->
     <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js"></script>
 </head>
 <body style="margin: 0; background-color: #f3eff7; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden;">
@@ -20,8 +20,9 @@
     <canvas id="canvas"></canvas>
 
     <script>
-        // ⚠️ 绝对正确的你的专属仓库地址！外加防缓存时间戳
-        const modelUrl = 'https://yuegu-0330.github.io/fern-pet/fern-g.model3.json?nocache=' + new Date().getTime();
+        // ⚠️ 唯一修改的地方：去掉了导致引擎路径解析死循环的 ?nocache 时间戳。
+        // 直接使用最干净的同目录相对路径，这样引擎就能精准找到 fern.moc3 了。
+        const modelUrl = 'fern-g.model3.json';
 
         const canvas = document.getElementById('canvas');
         const app = new PIXI.Application({
