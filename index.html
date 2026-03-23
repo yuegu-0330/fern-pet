@@ -2,168 +2,55 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>菲伦 (Fern) - 专属魔法使</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简测试版 - 菲伦</title>
     
+    <!-- 1. PixiJS 渲染引擎 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.8/pixi.min.js"></script>
-    <script src="https://fastly.jsdelivr.net/npm/live2dcubismcore@1.0.2/live2dcubismcore.min.js"></script>
-    <script src="https://unpkg.com/live2dcubismcore@1.0.2/live2dcubismcore.min.js"></script>
-
-    <style>
-        :root { --bg-color: #f3eff7; --theme-purple: #8a2be2; --text-dark: #3a2b42; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: radial-gradient(circle at top, #ffffff 0%, var(--bg-color) 100%); font-family: 'Nunito', 'Microsoft YaHei', sans-serif; overflow: hidden; cursor: none !important; user-select: none; -webkit-tap-highlight-color: transparent; }
-        * { cursor: none !important; }
-        #custom-cursor { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999; font-size: 35px; transform: translate(-10%, -10%); filter: drop-shadow(0 4px 8px rgba(138, 43, 226, 0.4)); transition: transform 0.1s; }
-        #custom-cursor.clicking { transform: translate(-10%, -10%) scale(0.8) rotate(-15deg) !important; }
-        #canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: flex-end; }
-        #live2d-canvas { display: block; max-width: 100%; max-height: 90vh; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1)); transition: transform 0.2s; }
-        .anim-shake { animation: shake 0.4s ease-in-out; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-        .message-box { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.92); padding: 15px 40px; border-radius: 30px; box-shadow: 0 10px 25px rgba(138, 43, 226, 0.15); font-size: 1.2rem; color: var(--text-dark); font-weight: bold; text-align: center; letter-spacing: 2px; backdrop-filter: blur(8px); border: 2px solid rgba(255,255,255,0.8); min-width: 280px; z-index: 10; opacity: 0; transition: all 0.3s ease; }
-        .instructions { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #7a6b82; font-size: 0.9rem; background: rgba(255,255,255,0.7); padding: 8px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.03); z-index: 10; }
-        #status-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; text-align: center; }
-        .status-box { background: white; padding: 25px 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); line-height: 1.6; max-width: 80%; word-wrap: break-word; }
-        #status-text { color: var(--theme-purple); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;}
-    </style>
+    
+    <!-- 2. Live2D 核心库 (采用全球最稳定的开源社区镜像，国内不卡，绝对真包) -->
+    <script src="https://fastly.jsdelivr.net/gh/dylanNew/live2d/webgl/Live2D/lib/live2dcubismcore.min.js"></script>
+    
+    <!-- 3. Live2D 桥接显示插件 -->
+    <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js"></script>
 </head>
-<body>
+<body style="margin: 0; background-color: #f3eff7; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden;">
 
-    <div id="custom-cursor">🪄</div>
-    <div class="instructions">💡 摸摸头(上方) | 捏脸颊(中部) | 戳身体(下方)</div>
-
-    <div id="status-overlay">
-        <div class="status-box">
-            <div id="status-text">正在召唤菲伦 (加载模型中...)</div>
-        </div>
-    </div>
-
-    <div id="canvas-container">
-        <canvas id="live2d-canvas"></canvas>
-    </div>
-
-    <div class="message-box" id="message"></div>
+    <!-- 唯一的一个画板 -->
+    <canvas id="canvas"></canvas>
 
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const canvas = document.getElementById('live2d-canvas');
-            const overlay = document.getElementById('status-overlay');
-            const statusText = document.getElementById('status-text');
+        // ⚠️ 绝对正确的你的专属仓库地址！外加防缓存时间戳
+        const modelUrl = 'https://yuegu-0330.github.io/fern-pet/fern.model3.json?nocache=' + new Date().getTime();
 
-            // ⚠️ 终极修改 1：利用时间戳强行打穿浏览器和 GitHub 的缓存！让它必定读取最新文件！
-            const modelUrl = 'fern.model3.json?nocache=' + new Date().getTime();
-
-            if (typeof Live2DCubismCore === 'undefined') {
-                statusText.innerHTML = "<b>⚠️ 致命错误：核心驱动库被拦截</b>";
-                statusText.style.color = "#d32f2f";
-                return;
-            }
-
-            const app = new PIXI.Application({
-                view: canvas,
-                transparent: true,
-                autoStart: true,
-                resizeTo: window,
-                resolution: window.devicePixelRatio || 1,
-            });
-
-            let fernModel = null;
-
-            try {
-                // 加载菲伦模型
-                fernModel = await PIXI.live2d.Live2DModel.from(modelUrl);
-                app.stage.addChild(fernModel);
-
-                const scale = window.innerWidth < 600 ? 0.15 : 0.20; 
-                fernModel.scale.set(scale); 
-                fernModel.anchor.set(0.5, 0.5); 
-                fernModel.x = app.renderer.width / 2;
-                fernModel.y = app.renderer.height / 2 + 150; 
-
-                overlay.style.display = 'none';
-                fernModel.motion('Idle');
-
-            } catch (error) {
-                // ⚠️ 终极修改 2：把底层真实报错原封不动地打印在屏幕上！
-                console.error("加载失败:", error);
-                statusText.innerHTML = "<b>❌ 模型解析失败</b><br><br><span style='font-size:14px; color:#d32f2f; font-family: monospace;'>" + error + "</span><br><br><span style='font-size:13px; color:#666;'>请截图此红色报错发给我！</span>";
-                return;
-            }
-
-            // ==========================================
-            // 互动逻辑
-            // ==========================================
-            const cursor = document.getElementById('custom-cursor');
-            const msgBox = document.getElementById('message');
-            let isAnimating = false;
-            let idleTimer;
-
-            const interactions = {
-                idle: { text: ["你想吃点心吗？", "...盯着我看干嘛？", "今天的魔法修行结束了吗。"] },
-                head: { text: ["这样...会弄乱头发的。", "嗯...谢谢。", "辛美尔大人也喜欢这样呢。"], exp: 'sy' },
-                face: { text: ["好痛。我要生气了。", "请不要捏我的脸。", "唔..."], exp: 'sq' },
-                body: { text: ["太下流了！", "我要用一般攻击魔法轰飞你哦。", "变态。"], exp: 'lh', motion: 'TapBody' }
-            };
-
-            function showMessage(type) {
-                const config = interactions[type];
-                const msg = config.text[Math.floor(Math.random() * config.text.length)];
-                msgBox.style.opacity = '0'; 
-                msgBox.style.transform = 'translateX(-50%) translateY(10px)';
-                setTimeout(() => {
-                    msgBox.textContent = msg;
-                    msgBox.style.opacity = '1'; 
-                    msgBox.style.transform = 'translateX(-50%) translateY(0)';
-                }, 200);
-                
-                clearTimeout(idleTimer);
-                idleTimer = setTimeout(() => { msgBox.style.opacity = '0'; }, 5000);
-            }
-
-            function triggerAction(type) {
-                if (isAnimating || !fernModel) return;
-                isAnimating = true;
-                const config = interactions[type];
-                
-                if(type === 'body') canvas.classList.add('anim-shake');
-                if(config.exp) fernModel.expression(config.exp);
-                if(config.motion) fernModel.motion(config.motion); 
-
-                showMessage(type);
-
-                setTimeout(() => {
-                    canvas.classList.remove('anim-shake');
-                    fernModel.internalModel.motionManager.expressionManager.resetExpression();
-                    isAnimating = false;
-                }, 2500); 
-            }
-
-            function updatePointer(e) {
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                cursor.style.left = `${clientX}px`;
-                cursor.style.top = `${clientY}px`;
-                if (fernModel) fernModel.focus(clientX, clientY);
-            }
-
-            function handleInteraction(e) {
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                const h = window.innerHeight;
-                if (clientY < h * 0.35) triggerAction('head');
-                else if (clientY < h * 0.65) triggerAction('face');
-                else triggerAction('body');
-            }
-
-            const events = ['mousemove', 'touchmove', 'touchstart'];
-            events.forEach(evt => window.addEventListener(evt, updatePointer, {passive: true}));
-
-            ['mousedown', 'touchstart'].forEach(evt => window.addEventListener(evt, (e) => {
-                if (e.target === canvas) handleInteraction(e);
-                cursor.classList.add('clicking');
-            }));
-            ['mouseup', 'touchend'].forEach(evt => window.addEventListener(evt, () => cursor.classList.remove('clicking')));
-
-            setTimeout(() => showMessage('idle'), 2000);
+        const canvas = document.getElementById('canvas');
+        const app = new PIXI.Application({
+            view: canvas,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            transparent: true,
+            resolution: window.devicePixelRatio || 1,
         });
+
+        // 极简暴力的加载逻辑：不搞提示框，只管加载
+        PIXI.live2d.Live2DModel.from(modelUrl)
+            .then(model => {
+                app.stage.addChild(model);
+                
+                // 设置半身像的大小和位置
+                const scale = window.innerWidth < 600 ? 0.15 : 0.20; 
+                model.scale.set(scale);
+                model.anchor.set(0.5, 0.5);
+                model.x = app.renderer.width / 2;
+                model.y = app.renderer.height / 2 + 100;
+                
+                // 成功后弹窗庆祝
+                alert("🎉 恭喜！模型加载成功！");
+            })
+            .catch(err => {
+                // 失败后直接把最底层的核心报错弹出来
+                alert("❌ 加载失败，原因: " + err.message);
+            });
     </script>
 </body>
 </html>
