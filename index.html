@@ -22,7 +22,7 @@
         .message-box { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.92); padding: 15px 40px; border-radius: 30px; box-shadow: 0 10px 25px rgba(138, 43, 226, 0.15); font-size: 1.2rem; color: var(--text-dark); font-weight: bold; text-align: center; letter-spacing: 2px; backdrop-filter: blur(8px); border: 2px solid rgba(255,255,255,0.8); min-width: 280px; z-index: 10; opacity: 0; transition: all 0.3s ease; }
         .instructions { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #7a6b82; font-size: 0.9rem; background: rgba(255,255,255,0.7); padding: 8px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.03); z-index: 10; }
         #status-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; text-align: center; }
-        .status-box { background: white; padding: 30px 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); line-height: 1.6;}
+        .status-box { background: white; padding: 25px 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); line-height: 1.6; max-width: 80%; word-wrap: break-word; }
         #status-text { color: var(--theme-purple); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;}
     </style>
 </head>
@@ -49,12 +49,11 @@
             const overlay = document.getElementById('status-overlay');
             const statusText = document.getElementById('status-text');
 
-            // ⚠️ 终极修复 1：强制使用绝对网络路径，彻底消灭 Github Pages 吞斜杠导致的 404 错误！
-            const modelUrl = 'https://1212211566.github.io/fern-live2D/fern.model3.json';
+            // ⚠️ 终极修改 1：利用时间戳强行打穿浏览器和 GitHub 的缓存！让它必定读取最新文件！
+            const modelUrl = 'fern.model3.json?nocache=' + new Date().getTime();
 
-            // ⚠️ 终极修复 2：网络拦截检测器！如果官方库被墙，立刻提示用户，不再无限假死！
             if (typeof Live2DCubismCore === 'undefined') {
-                statusText.innerHTML = "<b>⚠️ 致命错误：核心驱动库被拦截</b><br><br><span style='font-size:16px; color:#555;'>原因：Live2D 官方服务器在国内网络加载失败。<br><br><b>解决办法：</b><br>请开启 <b>科学上网/游戏加速器</b>，或者切换手机网络后<b>重新刷新本页</b>！</span>";
+                statusText.innerHTML = "<b>⚠️ 致命错误：核心驱动库被拦截</b>";
                 statusText.style.color = "#d32f2f";
                 return;
             }
@@ -80,14 +79,13 @@
                 fernModel.x = app.renderer.width / 2;
                 fernModel.y = app.renderer.height / 2 + 150; 
 
-                // 隐藏加载界面
                 overlay.style.display = 'none';
                 fernModel.motion('Idle');
 
             } catch (error) {
+                // ⚠️ 终极修改 2：把底层真实报错原封不动地打印在屏幕上！
                 console.error("加载失败:", error);
-                statusText.innerHTML = "<b>❌ 模型解析失败</b><br><span style='font-size:14px; color:#666;'>请检查文件是否完整。</span>";
-                statusText.style.color = "#d32f2f";
+                statusText.innerHTML = "<b>❌ 模型解析失败</b><br><br><span style='font-size:14px; color:#d32f2f; font-family: monospace;'>" + error + "</span><br><br><span style='font-size:13px; color:#666;'>请截图此红色报错发给我！</span>";
                 return;
             }
 
