@@ -5,132 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>菲伦 (Fern) - 专属魔法使</title>
     
-    <!-- 已经换回最稳定的官方核心库，绝对不会再报错了！ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.8/pixi.min.js"></script>
     <script src="https://cubism.live2d.com/sdk-web/bin/live2dcubismcore.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js"></script>
 
     <style>
-        :root {
-            --bg-color: #f3eff7; 
-            --theme-purple: #8a2be2;
-            --text-dark: #3a2b42;
-        }
-
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at top, #ffffff 0%, var(--bg-color) 100%);
-            font-family: 'Nunito', 'Microsoft YaHei', sans-serif;
-            overflow: hidden;
-            cursor: none !important; 
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        :root { --bg-color: #f3eff7; --theme-purple: #8a2be2; --text-dark: #3a2b42; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: radial-gradient(circle at top, #ffffff 0%, var(--bg-color) 100%); font-family: 'Nunito', 'Microsoft YaHei', sans-serif; overflow: hidden; cursor: none !important; user-select: none; -webkit-tap-highlight-color: transparent; }
         * { cursor: none !important; }
-
-        /* 魔法杖光标 */
-        #custom-cursor {
-            position: fixed;
-            top: 0; left: 0;
-            pointer-events: none;
-            z-index: 9999;
-            font-size: 35px;
-            transform: translate(-10%, -10%);
-            filter: drop-shadow(0 4px 8px rgba(138, 43, 226, 0.4));
-            transition: transform 0.1s;
-        }
-        #custom-cursor.clicking {
-            transform: translate(-10%, -10%) scale(0.8) rotate(-15deg) !important;
-        }
-
-        /* 容器布局 */
-        #canvas-container {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end; 
-        }
-
-        #live2d-canvas {
-            display: block;
-            max-width: 100%;
-            max-height: 90vh; 
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
-            transition: transform 0.2s;
-        }
-
-        /* 物理震动反馈 */
+        #custom-cursor { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999; font-size: 35px; transform: translate(-10%, -10%); filter: drop-shadow(0 4px 8px rgba(138, 43, 226, 0.4)); transition: transform 0.1s; }
+        #custom-cursor.clicking { transform: translate(-10%, -10%) scale(0.8) rotate(-15deg) !important; }
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: flex-end; }
+        #live2d-canvas { display: block; max-width: 100%; max-height: 90vh; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1)); transition: transform 0.2s; }
         .anim-shake { animation: shake 0.4s ease-in-out; }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
-        }
-
-        /* 对话框 */
-        .message-box {
-            position: absolute;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.92);
-            padding: 15px 40px;
-            border-radius: 30px;
-            box-shadow: 0 10px 25px rgba(138, 43, 226, 0.15);
-            font-size: 1.2rem;
-            color: var(--text-dark);
-            font-weight: bold;
-            text-align: center;
-            letter-spacing: 2px;
-            backdrop-filter: blur(8px);
-            border: 2px solid rgba(255,255,255,0.8);
-            min-width: 280px;
-            z-index: 10;
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-
-        /* 操作提示 */
-        .instructions {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #7a6b82;
-            font-size: 0.9rem;
-            background: rgba(255,255,255,0.7);
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-            z-index: 10;
-        }
-
-        /* 状态覆盖层 */
-        #status-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 999;
-            text-align: center;
-        }
-        .status-box {
-            background: white;
-            padding: 30px 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+        .message-box { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.92); padding: 15px 40px; border-radius: 30px; box-shadow: 0 10px 25px rgba(138, 43, 226, 0.15); font-size: 1.2rem; color: var(--text-dark); font-weight: bold; text-align: center; letter-spacing: 2px; backdrop-filter: blur(8px); border: 2px solid rgba(255,255,255,0.8); min-width: 280px; z-index: 10; opacity: 0; transition: all 0.3s ease; }
+        .instructions { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #7a6b82; font-size: 0.9rem; background: rgba(255,255,255,0.7); padding: 8px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.03); z-index: 10; }
+        #status-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; text-align: center; }
+        .status-box { background: white; padding: 30px 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); line-height: 1.6;}
         #status-text { color: var(--theme-purple); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;}
     </style>
 </head>
@@ -139,30 +31,34 @@
     <div id="custom-cursor">🪄</div>
     <div class="instructions">💡 摸摸头(上方) | 捏脸颊(中部) | 戳身体(下方)</div>
 
-    <!-- 加载与错误提示页 -->
     <div id="status-overlay">
         <div class="status-box">
             <div id="status-text">正在召唤菲伦 (加载模型中...)</div>
         </div>
     </div>
 
-    <!-- Live2D 画布 -->
     <div id="canvas-container">
         <canvas id="live2d-canvas"></canvas>
     </div>
 
-    <!-- 对话框 -->
     <div class="message-box" id="message"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            // 核心路径绑定 (相对路径)
-            const modelUrl = './fern.model3.json';
-
             const canvas = document.getElementById('live2d-canvas');
             const overlay = document.getElementById('status-overlay');
             const statusText = document.getElementById('status-text');
-            
+
+            // ⚠️ 终极修复 1：强制使用绝对网络路径，彻底消灭 Github Pages 吞斜杠导致的 404 错误！
+            const modelUrl = 'https://1212211566.github.io/fern-live2D/fern.model3.json';
+
+            // ⚠️ 终极修复 2：网络拦截检测器！如果官方库被墙，立刻提示用户，不再无限假死！
+            if (typeof Live2DCubismCore === 'undefined') {
+                statusText.innerHTML = "<b>⚠️ 致命错误：核心驱动库被拦截</b><br><br><span style='font-size:16px; color:#555;'>原因：Live2D 官方服务器在国内网络加载失败。<br><br><b>解决办法：</b><br>请开启 <b>科学上网/游戏加速器</b>，或者切换手机网络后<b>重新刷新本页</b>！</span>";
+                statusText.style.color = "#d32f2f";
+                return;
+            }
+
             const app = new PIXI.Application({
                 view: canvas,
                 transparent: true,
@@ -178,7 +74,6 @@
                 fernModel = await PIXI.live2d.Live2DModel.from(modelUrl);
                 app.stage.addChild(fernModel);
 
-                // 适配半身像尺寸
                 const scale = window.innerWidth < 600 ? 0.15 : 0.20; 
                 fernModel.scale.set(scale); 
                 fernModel.anchor.set(0.5, 0.5); 
@@ -187,19 +82,17 @@
 
                 // 隐藏加载界面
                 overlay.style.display = 'none';
-
-                // 播放待机动画
                 fernModel.motion('Idle');
 
             } catch (error) {
                 console.error("加载失败:", error);
-                statusText.innerText = "召唤失败，请检查网络！";
+                statusText.innerHTML = "<b>❌ 模型解析失败</b><br><span style='font-size:14px; color:#666;'>请检查文件是否完整。</span>";
                 statusText.style.color = "#d32f2f";
                 return;
             }
 
             // ==========================================
-            // 文案库 & 互动逻辑绑定
+            // 互动逻辑
             // ==========================================
             const cursor = document.getElementById('custom-cursor');
             const msgBox = document.getElementById('message');
@@ -225,19 +118,15 @@
                 }, 200);
                 
                 clearTimeout(idleTimer);
-                idleTimer = setTimeout(() => {
-                    msgBox.style.opacity = '0'; 
-                }, 5000);
+                idleTimer = setTimeout(() => { msgBox.style.opacity = '0'; }, 5000);
             }
 
             function triggerAction(type) {
                 if (isAnimating || !fernModel) return;
                 isAnimating = true;
-                
                 const config = interactions[type];
                 
                 if(type === 'body') canvas.classList.add('anim-shake');
-                
                 if(config.exp) fernModel.expression(config.exp);
                 if(config.motion) fernModel.motion(config.motion); 
 
@@ -253,24 +142,17 @@
             function updatePointer(e) {
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
                 cursor.style.left = `${clientX}px`;
                 cursor.style.top = `${clientY}px`;
-
                 if (fernModel) fernModel.focus(clientX, clientY);
             }
 
             function handleInteraction(e) {
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
                 const h = window.innerHeight;
-
-                if (clientY < h * 0.35) {
-                    triggerAction('head');
-                } else if (clientY < h * 0.65) {
-                    triggerAction('face');
-                } else {
-                    triggerAction('body');
-                }
+                if (clientY < h * 0.35) triggerAction('head');
+                else if (clientY < h * 0.65) triggerAction('face');
+                else triggerAction('body');
             }
 
             const events = ['mousemove', 'touchmove', 'touchstart'];
